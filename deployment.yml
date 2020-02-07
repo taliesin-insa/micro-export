@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: export
+  namespace: gitlab-managed-apps
+  labels:
+    app: export
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: export
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 33%
+  template:
+    metadata:
+      labels:
+        app: export
+    spec:
+      containers:
+        - name: export
+          image: clyde.local:5005/taliesin/micro-export/master
+          ports:
+            - containerPort: 22022
+          volumeMounts:
+            - mountPath: "/snippets/"
+              name: file-server
+      volumes:
+        - name: file-server
+          persistentVolumeClaim:
+            claimName: file-server-claim
+

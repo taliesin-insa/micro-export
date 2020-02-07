@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: export-api
+  namespace: gitlab-managed-apps
+spec:
+  selector:
+    app: export
+  ports:
+    - protocol: TCP
+      port: 22022
+      targetPort: 22022
