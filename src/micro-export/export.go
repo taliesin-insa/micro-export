@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"strings"
 )
@@ -51,12 +50,15 @@ type PictureArray struct {
 }
 
 // Returns a Buffer (representing the zip archive) containing all PiFF files and images
-func getPiFFArchive() *bytes.Buffer {
+func getPiFFArchive() (*bytes.Buffer, error) {
 	// create zip file and zip writer
 	outFile := new(bytes.Buffer)
 	w := zip.NewWriter(outFile)
 
-	piFFData := getData()
+	piFFData, err := getData()
+	if err != nil {
+		return nil, err
+	}
 
 	// add files to zip
 	for _, picture := range piFFData.Pictures {
@@ -65,40 +67,71 @@ func getPiFFArchive() *bytes.Buffer {
 
 		// add image to zip
 		image, err := ioutil.ReadFile(imagePath)
-		checkError(err)
+		if err != nil {
+			return nil, err
+		}
+
 		file, err := w.Create(imagePath)
-		checkError(err)
+		if err != nil {
+			return nil, err
+		}
+
 		_, err = file.Write(image)
+		if err != nil {
+			return nil, err
+		}
 
 		// add file to zip
 		file, err = w.Create(getImageName(imagePath) + ".piff")
-		checkError(err)
-		piFF, err := json.MarshalIndent(picture, "", "    ")
+		if err != nil {
+			return nil, err
+		}
+
+		piFF, err := json.MarshalIndent(picture.PiFF, "", "    ")
 		_, err = file.Write(piFF)
+		if err != nil {
+			return nil, err
+		}
 
 	}
 
 	// close writer
-	checkError(w.Close())
+	err = w.Close()
+	if err != nil {
+		return nil, err
+	}
 
-	return outFile
+	return outFile, nil
 }
 
 // Get all piFF from database
-func getData() PictureArray {
-	resp, err := http.Get("url ici")
-	checkError(err)
+func getData() (PictureArray, error) {
+	client := &http.Client{}
+
+	request, err := http.NewRequest(http.MethodPut, "http://database-api.gitlab-managed-apps.svc.cluster.local:8080/db/retrieve/all", nil)
+	if err != nil {
+		return PictureArray{}, err
+	}
+
+	response, err := client.Do(request)
+	if err != nil {
+		return PictureArray{}, err
+	}
 
 	// get body of returned data
-	body, err := ioutil.ReadAll(resp.Body)
-	checkError(err)
+	body, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return PictureArray{}, err
+	}
 
 	// transform json into struct
 	var PiFFData PictureArray
 	err = json.Unmarshal(body, &PiFFData)
-	checkError(err)
+	if err != nil {
+		return PictureArray{}, err
+	}
 
-	return PiFFData
+	return PiFFData, nil
 }
 
 // From "/example/of/path/image.png" to "image"
@@ -108,10 +141,4 @@ func getImageName(imagePath string) string {
 	segments = strings.Split(nameWithExt, ".")
 	name := segments[len(segments)-2] // image name without extension
 	return name
-}
-
-func checkError(err error) {
-	if err != nil {
-		log.Fatal(err)
-	}
 }

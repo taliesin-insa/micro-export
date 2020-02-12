@@ -10,13 +10,17 @@ import (
 )
 
 func exportPiFF(w http.ResponseWriter, r *http.Request) {
-	file := getPiFFArchive()
+	file, err := getPiFFArchive()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
+		return
+	}
 
 	// send data
 	w.Header().Set("Content-Type", "application/zip")
 	w.Header().Set("Content-Length", strconv.FormatInt(int64(file.Len()), 10))
-	_, err := io.Copy(w, file)
-	checkError(err)
+	io.Copy(w, file)
 }
 
 // function to test whether docker file is correctly built
