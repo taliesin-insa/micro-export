@@ -36,6 +36,7 @@ type PiFFStruct struct {
 }
 
 type Picture struct {
+	_id        []byte
 	PiFF       PiFFStruct
 	Url        string
 	Annotated  bool
