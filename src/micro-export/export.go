@@ -64,32 +64,41 @@ func getPiFFArchive() (*bytes.Buffer, error) {
 	// add files to zip
 	for _, picture := range piFFData.Pictures {
 		// get image name
-		imagePath := picture.Url
+		imageURL := picture.Url
+		imagePath := ""
+
+		if picture.Unreadable { // if unreadable, we don't create the PiFF file and we stock the image in a different repertory
+			imagePath = "Unreadable/"
+		} else {
+			// add file to zip
+			file, err := w.Create(getImageName(imageURL) + ".piff")
+			if err != nil {
+				return nil, err
+			}
+
+			piFF, err := json.MarshalIndent(picture.PiFF, "", "    ")
+			if err != nil {
+				return nil, err
+			}
+
+			_, err = file.Write(piFF)
+			if err != nil {
+				return nil, err
+			}
+		}
 
 		// add image to zip
-		image, err := ioutil.ReadFile(imagePath)
+		image, err := ioutil.ReadFile(imageURL)
 		if err != nil {
 			return nil, err
 		}
 
-		file, err := w.Create(imagePath)
+		file, err := w.Create(imagePath + getImageName(imageURL))
 		if err != nil {
 			return nil, err
 		}
 
 		_, err = file.Write(image)
-		if err != nil {
-			return nil, err
-		}
-
-		// add file to zip
-		file, err = w.Create(getImageName(imagePath) + ".piff")
-		if err != nil {
-			return nil, err
-		}
-
-		piFF, err := json.MarshalIndent(picture.PiFF, "", "    ")
-		_, err = file.Write(piFF)
 		if err != nil {
 			return nil, err
 		}
@@ -109,7 +118,7 @@ func getPiFFArchive() (*bytes.Buffer, error) {
 func getData() (PictureArray, error) {
 	client := &http.Client{}
 
-	request, err := http.NewRequest(http.MethodPut, "http://database-api.gitlab-managed-apps.svc.cluster.local:8080/db/retrieve/all", nil)
+	request, err := http.NewRequest(http.MethodGet, "http://database-api.gitlab-managed-apps.svc.cluster.local:8080/db/retrieve/all", nil)
 	if err != nil {
 		return PictureArray{}, err
 	}
