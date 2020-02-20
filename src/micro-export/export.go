@@ -63,33 +63,43 @@ func getPiFFArchive() (*bytes.Buffer, error) {
 
 	// add files to zip
 	for _, picture := range piFFData.Pictures {
-		// get image name
-		imagePath := picture.Url
+		// get image variables
+		imageURL := picture.Url
+		imagePath := ""
+		imageNameWithExt, imageName := getImageName(imageURL)
 
-		// add image to zip
-		image, err := ioutil.ReadFile(imagePath)
-		if err != nil {
-			return nil, err
-		}
-
-		file, err := w.Create(imagePath)
-		if err != nil {
-			return nil, err
-		}
-
-		_, err = file.Write(image)
-		if err != nil {
-			return nil, err
+		if picture.Unreadable { // if unreadable, we store the image and the file in a different folder
+			imagePath = "Unreadable/"
 		}
 
 		// add file to zip
-		file, err = w.Create(getImageName(imagePath) + ".piff")
+		file, err := w.Create(imagePath + imageName + ".piff")
 		if err != nil {
 			return nil, err
 		}
 
 		piFF, err := json.MarshalIndent(picture.PiFF, "", "    ")
+		if err != nil {
+			return nil, err
+		}
+
 		_, err = file.Write(piFF)
+		if err != nil {
+			return nil, err
+		}
+
+		// add image to zip
+		image, err := ioutil.ReadFile(imageURL)
+		if err != nil {
+			return nil, err
+		}
+
+		file, err = w.Create(imagePath + imageNameWithExt)
+		if err != nil {
+			return nil, err
+		}
+
+		_, err = file.Write(image)
 		if err != nil {
 			return nil, err
 		}
@@ -109,7 +119,7 @@ func getPiFFArchive() (*bytes.Buffer, error) {
 func getData() (PictureArray, error) {
 	client := &http.Client{}
 
-	request, err := http.NewRequest(http.MethodPut, "http://database-api.gitlab-managed-apps.svc.cluster.local:8080/db/retrieve/all", nil)
+	request, err := http.NewRequest(http.MethodGet, "http://database-api.gitlab-managed-apps.svc.cluster.local:8080/db/retrieve/all", nil)
 	if err != nil {
 		return PictureArray{}, err
 	}
@@ -135,11 +145,11 @@ func getData() (PictureArray, error) {
 	return PiFFData, nil
 }
 
-// From "/example/of/path/image.png" to "image"
-func getImageName(imagePath string) string {
+// From "/example/of/path/image.png" to "image.png" and "image"
+func getImageName(imagePath string) (string, string) {
 	segments := strings.Split(imagePath, "/")
 	nameWithExt := segments[len(segments)-1] // image name with extension
 	segments = strings.Split(nameWithExt, ".")
 	name := segments[len(segments)-2] // image name without extension
-	return name
+	return nameWithExt, name
 }
