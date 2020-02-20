@@ -63,28 +63,29 @@ func getPiFFArchive() (*bytes.Buffer, error) {
 
 	// add files to zip
 	for _, picture := range piFFData.Pictures {
-		// get image name
+		// get image variables
 		imageURL := picture.Url
 		imagePath := ""
+		imageNameWithExt, imageName := getImageName(imageURL)
 
-		if picture.Unreadable { // if unreadable, we don't create the PiFF file and we stock the image in a different repertory
+		if picture.Unreadable { // if unreadable, we stock the image and the file in a different repertory
 			imagePath = "Unreadable/"
-		} else {
-			// add file to zip
-			file, err := w.Create(getImageName(imageURL) + ".piff")
-			if err != nil {
-				return nil, err
-			}
+		}
 
-			piFF, err := json.MarshalIndent(picture.PiFF, "", "    ")
-			if err != nil {
-				return nil, err
-			}
+		// add file to zip
+		file, err := w.Create(imagePath + imageName + ".piff")
+		if err != nil {
+			return nil, err
+		}
 
-			_, err = file.Write(piFF)
-			if err != nil {
-				return nil, err
-			}
+		piFF, err := json.MarshalIndent(picture.PiFF, "", "    ")
+		if err != nil {
+			return nil, err
+		}
+
+		_, err = file.Write(piFF)
+		if err != nil {
+			return nil, err
 		}
 
 		// add image to zip
@@ -93,7 +94,7 @@ func getPiFFArchive() (*bytes.Buffer, error) {
 			return nil, err
 		}
 
-		file, err := w.Create(imagePath + getImageName(imageURL))
+		file, err = w.Create(imagePath + imageNameWithExt)
 		if err != nil {
 			return nil, err
 		}
@@ -144,11 +145,11 @@ func getData() (PictureArray, error) {
 	return PiFFData, nil
 }
 
-// From "/example/of/path/image.png" to "image"
-func getImageName(imagePath string) string {
+// From "/example/of/path/image.png" to "image.png" and "image"
+func getImageName(imagePath string) (string, string) {
 	segments := strings.Split(imagePath, "/")
 	nameWithExt := segments[len(segments)-1] // image name with extension
 	segments = strings.Split(nameWithExt, ".")
 	name := segments[len(segments)-2] // image name without extension
-	return name
+	return nameWithExt, name
 }
