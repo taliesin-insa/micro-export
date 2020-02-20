@@ -68,7 +68,7 @@ func getPiFFArchive() (*bytes.Buffer, error) {
 		imagePath := ""
 		imageNameWithExt, imageName := getImageName(imageURL)
 
-		if picture.Unreadable { // if unreadable, we stock the image and the file in a different repertory
+		if picture.Unreadable { // if unreadable, we store the image and the file in a different folder
 			imagePath = "Unreadable/"
 		}
 
