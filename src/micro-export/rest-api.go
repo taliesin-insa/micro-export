@@ -64,7 +64,7 @@ func exportPiFF(w http.ResponseWriter, r *http.Request) {
 		errorHeader := "[MICRO-EXPORT] Get request: "
 		fmt.Println(errorHeader + err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(err.Error()))
+		w.Write([]byte(errorHeader + err.Error()))
 		return
 	}
 
@@ -73,7 +73,7 @@ func exportPiFF(w http.ResponseWriter, r *http.Request) {
 		errorHeader := "[MICRO-EXPORT] Do request: "
 		fmt.Println(errorHeader + err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(err.Error()))
+		w.Write([]byte(errorHeader + err.Error()))
 		return
 	}
 
@@ -83,7 +83,7 @@ func exportPiFF(w http.ResponseWriter, r *http.Request) {
 		errorHeader := "[MICRO-EXPORT] Read data: "
 		fmt.Println(errorHeader + err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(err.Error()))
+		w.Write([]byte(errorHeader + err.Error()))
 		return
 	}
 
@@ -94,7 +94,7 @@ func exportPiFF(w http.ResponseWriter, r *http.Request) {
 		errorHeader := "[MICRO-EXPORT] Unmarshal data: "
 		fmt.Println(errorHeader + err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(err.Error()))
+		w.Write([]byte(errorHeader + err.Error()))
 		return
 	}
 
@@ -123,7 +123,7 @@ func exportPiFF(w http.ResponseWriter, r *http.Request) {
 			errorHeader := "[MICRO-EXPORT] Create piFF: "
 			fmt.Println(errorHeader + err.Error())
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(err.Error()))
+			w.Write([]byte(errorHeader + err.Error()))
 			return
 		}
 
@@ -132,7 +132,7 @@ func exportPiFF(w http.ResponseWriter, r *http.Request) {
 			errorHeader := "[MICRO-EXPORT] Marshal piFF: "
 			fmt.Println(errorHeader + err.Error())
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(err.Error()))
+			w.Write([]byte(errorHeader + err.Error()))
 			return
 		}
 
@@ -141,7 +141,7 @@ func exportPiFF(w http.ResponseWriter, r *http.Request) {
 			errorHeader := "[MICRO-EXPORT] Write piFF: "
 			fmt.Println(errorHeader + err.Error())
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(err.Error()))
+			w.Write([]byte(errorHeader + err.Error()))
 			return
 		}
 
@@ -151,7 +151,7 @@ func exportPiFF(w http.ResponseWriter, r *http.Request) {
 			errorHeader := "[MICRO-EXPORT] Read image: "
 			fmt.Println(errorHeader + err.Error())
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(err.Error()))
+			w.Write([]byte(errorHeader + err.Error()))
 			return
 		}
 
@@ -160,7 +160,7 @@ func exportPiFF(w http.ResponseWriter, r *http.Request) {
 			errorHeader := "[MICRO-EXPORT] Create image: "
 			fmt.Println(errorHeader + err.Error())
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(err.Error()))
+			w.Write([]byte(errorHeader + err.Error()))
 			return
 		}
 
@@ -169,7 +169,7 @@ func exportPiFF(w http.ResponseWriter, r *http.Request) {
 			errorHeader := "[MICRO-EXPORT] Write image: "
 			fmt.Println(errorHeader + err.Error())
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(err.Error()))
+			w.Write([]byte(errorHeader + err.Error()))
 			return
 		}
 
@@ -181,7 +181,7 @@ func exportPiFF(w http.ResponseWriter, r *http.Request) {
 		errorHeader := "[MICRO-EXPORT] Close writer: "
 		fmt.Println(errorHeader + err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(err.Error()))
+		w.Write([]byte(errorHeader + err.Error()))
 		return
 	}
 
