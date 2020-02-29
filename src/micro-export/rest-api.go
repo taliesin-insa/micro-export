@@ -61,6 +61,8 @@ func exportPiFF(w http.ResponseWriter, r *http.Request) {
 	//request, err := http.NewRequest(http.MethodGet, "http://database-api.gitlab-managed-apps.svc.cluster.local:8080/db/retrieve/all", nil)
 	request, err := http.NewRequest(http.MethodGet, "http://localhost:22022/essai/archive", nil)
 	if err != nil {
+		errorHeader := "[MICRO-EXPORT] Get request: "
+		fmt.Println(errorHeader + err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(err.Error()))
 		return
@@ -68,6 +70,8 @@ func exportPiFF(w http.ResponseWriter, r *http.Request) {
 
 	response, err := client.Do(request)
 	if err != nil {
+		errorHeader := "[MICRO-EXPORT] Do request: "
+		fmt.Println(errorHeader + err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(err.Error()))
 		return
@@ -76,6 +80,8 @@ func exportPiFF(w http.ResponseWriter, r *http.Request) {
 	// get body of returned data
 	body, err := ioutil.ReadAll(response.Body)
 	if err != nil {
+		errorHeader := "[MICRO-EXPORT] Read data: "
+		fmt.Println(errorHeader + err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(err.Error()))
 		return
@@ -85,6 +91,8 @@ func exportPiFF(w http.ResponseWriter, r *http.Request) {
 	var piFFData PictureArray
 	err = json.Unmarshal(body, &piFFData)
 	if err != nil {
+		errorHeader := "[MICRO-EXPORT] Unmarshal data: "
+		fmt.Println(errorHeader + err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(err.Error()))
 		return
@@ -112,6 +120,8 @@ func exportPiFF(w http.ResponseWriter, r *http.Request) {
 		// add file to zip
 		file, err := writer.Create(imagePath + imageName + ".piff")
 		if err != nil {
+			errorHeader := "[MICRO-EXPORT] Create piFF: "
+			fmt.Println(errorHeader + err.Error())
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(err.Error()))
 			return
@@ -119,6 +129,8 @@ func exportPiFF(w http.ResponseWriter, r *http.Request) {
 
 		piFF, err := json.MarshalIndent(picture.PiFF, "", "    ")
 		if err != nil {
+			errorHeader := "[MICRO-EXPORT] Marshal piFF: "
+			fmt.Println(errorHeader + err.Error())
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(err.Error()))
 			return
@@ -126,6 +138,8 @@ func exportPiFF(w http.ResponseWriter, r *http.Request) {
 
 		_, err = file.Write(piFF)
 		if err != nil {
+			errorHeader := "[MICRO-EXPORT] Write piFF: "
+			fmt.Println(errorHeader + err.Error())
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(err.Error()))
 			return
@@ -134,6 +148,8 @@ func exportPiFF(w http.ResponseWriter, r *http.Request) {
 		// add image to zip
 		image, err := ioutil.ReadFile(imageURL)
 		if err != nil {
+			errorHeader := "[MICRO-EXPORT] Read image: "
+			fmt.Println(errorHeader + err.Error())
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(err.Error()))
 			return
@@ -141,6 +157,8 @@ func exportPiFF(w http.ResponseWriter, r *http.Request) {
 
 		file, err = writer.Create(imagePath + imageNameWithExt)
 		if err != nil {
+			errorHeader := "[MICRO-EXPORT] Create image: "
+			fmt.Println(errorHeader + err.Error())
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(err.Error()))
 			return
@@ -148,6 +166,8 @@ func exportPiFF(w http.ResponseWriter, r *http.Request) {
 
 		_, err = file.Write(image)
 		if err != nil {
+			errorHeader := "[MICRO-EXPORT] Write image: "
+			fmt.Println(errorHeader + err.Error())
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(err.Error()))
 			return
@@ -158,6 +178,8 @@ func exportPiFF(w http.ResponseWriter, r *http.Request) {
 	// close writer
 	err = writer.Close()
 	if err != nil {
+		errorHeader := "[MICRO-EXPORT] Close writer: "
+		fmt.Println(errorHeader + err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(err.Error()))
 		return
