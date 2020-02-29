@@ -86,6 +86,15 @@ func exportPiFF(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// checks whether there was an error during request
+	if response.StatusCode != http.StatusOK {
+		errorHeader := "[MICRO-EXPORT] Do request: "
+		fmt.Println(errorHeader + string(body))
+		w.WriteHeader(response.StatusCode)
+		w.Write(body)
+		return
+	}
+
 	// transform json into struct
 	var piFFData PictureArray
 	err = json.Unmarshal(body, &piFFData)
