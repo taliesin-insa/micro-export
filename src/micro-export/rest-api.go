@@ -60,36 +60,36 @@ func exportPiFF(w http.ResponseWriter, r *http.Request) {
 	client := &http.Client{}
 	request, err := http.NewRequest(http.MethodGet, "http://database-api.gitlab-managed-apps.svc.cluster.local:8080/db/retrieve/all", nil)
 	if err != nil {
-		errorHeader := "[MICRO-EXPORT] Get request: "
-		fmt.Println(errorHeader + err.Error())
+		errorPrefix := "[MICRO-EXPORT] Get request: "
+		fmt.Println(errorPrefix + err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(errorHeader + err.Error()))
+		w.Write([]byte(errorPrefix + err.Error()))
 		return
 	}
 
 	response, err := client.Do(request)
 	if err != nil {
-		errorHeader := "[MICRO-EXPORT] Do request: "
-		fmt.Println(errorHeader + err.Error())
+		errorPrefix := "[MICRO-EXPORT] Do request: "
+		fmt.Println(errorPrefix + err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(errorHeader + err.Error()))
+		w.Write([]byte(errorPrefix + err.Error()))
 		return
 	}
 
 	// get body of returned data
 	body, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		errorHeader := "[MICRO-EXPORT] Read data: "
-		fmt.Println(errorHeader + err.Error())
+		errorPrefix := "[MICRO-EXPORT] Read data: "
+		fmt.Println(errorPrefix + err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(errorHeader + err.Error()))
+		w.Write([]byte(errorPrefix + err.Error()))
 		return
 	}
 
 	// checks whether there was an error during request
 	if response.StatusCode != http.StatusOK {
-		errorHeader := "[MICRO-EXPORT] Do request: "
-		fmt.Println(errorHeader + string(body))
+		errorPrefix := "[MICRO-EXPORT] Do request: "
+		fmt.Println(errorPrefix + string(body))
 		w.WriteHeader(response.StatusCode)
 		w.Write(body)
 		return
@@ -99,10 +99,10 @@ func exportPiFF(w http.ResponseWriter, r *http.Request) {
 	var piFFData PictureArray
 	err = json.Unmarshal(body, &piFFData)
 	if err != nil {
-		errorHeader := "[MICRO-EXPORT] Unmarshal data: "
-		fmt.Println(errorHeader + err.Error())
+		errorPrefix := "[MICRO-EXPORT] Unmarshal data: "
+		fmt.Println(errorPrefix + err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(errorHeader + err.Error()))
+		w.Write([]byte(errorPrefix + err.Error()))
 		return
 	}
 
@@ -128,56 +128,56 @@ func exportPiFF(w http.ResponseWriter, r *http.Request) {
 		// add file to zip
 		file, err := writer.Create(imagePath + imageName + ".piff")
 		if err != nil {
-			errorHeader := "[MICRO-EXPORT] Create piFF: "
-			fmt.Println(errorHeader + err.Error())
+			errorPrefix := "[MICRO-EXPORT] Create piFF: "
+			fmt.Println(errorPrefix + err.Error())
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(errorHeader + err.Error()))
+			w.Write([]byte(errorPrefix + err.Error()))
 			return
 		}
 
 		piFF, err := json.MarshalIndent(picture.PiFF, "", "    ")
 		if err != nil {
-			errorHeader := "[MICRO-EXPORT] Marshal piFF: "
-			fmt.Println(errorHeader + err.Error())
+			errorPrefix := "[MICRO-EXPORT] Marshal piFF: "
+			fmt.Println(errorPrefix + err.Error())
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(errorHeader + err.Error()))
+			w.Write([]byte(errorPrefix + err.Error()))
 			return
 		}
 
 		_, err = file.Write(piFF)
 		if err != nil {
-			errorHeader := "[MICRO-EXPORT] Write piFF: "
-			fmt.Println(errorHeader + err.Error())
+			errorPrefix := "[MICRO-EXPORT] Write piFF: "
+			fmt.Println(errorPrefix + err.Error())
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(errorHeader + err.Error()))
+			w.Write([]byte(errorPrefix + err.Error()))
 			return
 		}
 
 		// add image to zip
 		image, err := ioutil.ReadFile(imageURL)
 		if err != nil {
-			errorHeader := "[MICRO-EXPORT] Read image: "
-			fmt.Println(errorHeader + err.Error())
+			errorPrefix := "[MICRO-EXPORT] Read image: "
+			fmt.Println(errorPrefix + err.Error())
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(errorHeader + err.Error()))
+			w.Write([]byte(errorPrefix + err.Error()))
 			return
 		}
 
 		file, err = writer.Create(imagePath + imageNameWithExt)
 		if err != nil {
-			errorHeader := "[MICRO-EXPORT] Create image: "
-			fmt.Println(errorHeader + err.Error())
+			errorPrefix := "[MICRO-EXPORT] Create image: "
+			fmt.Println(errorPrefix + err.Error())
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(errorHeader + err.Error()))
+			w.Write([]byte(errorPrefix + err.Error()))
 			return
 		}
 
 		_, err = file.Write(image)
 		if err != nil {
-			errorHeader := "[MICRO-EXPORT] Write image: "
-			fmt.Println(errorHeader + err.Error())
+			errorPrefix := "[MICRO-EXPORT] Write image: "
+			fmt.Println(errorPrefix + err.Error())
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(errorHeader + err.Error()))
+			w.Write([]byte(errorPrefix + err.Error()))
 			return
 		}
 
@@ -186,10 +186,10 @@ func exportPiFF(w http.ResponseWriter, r *http.Request) {
 	// close writer
 	err = writer.Close()
 	if err != nil {
-		errorHeader := "[MICRO-EXPORT] Close writer: "
-		fmt.Println(errorHeader + err.Error())
+		errorPrefix := "[MICRO-EXPORT] Close writer: "
+		fmt.Println(errorPrefix + err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(errorHeader + err.Error()))
+		w.Write([]byte(errorPrefix + err.Error()))
 		return
 	}
 
