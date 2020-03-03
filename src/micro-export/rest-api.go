@@ -85,7 +85,7 @@ func exportPiFF(w http.ResponseWriter, r *http.Request) {
 
 	// checks whether there was an error during request
 	if response.StatusCode != http.StatusOK {
-		log.Printf("[ERROR] Do request: %v", err.Error())
+		log.Printf("[ERROR] Do request: %v", body)
 		w.WriteHeader(response.StatusCode)
 		w.Write(body)
 		return
