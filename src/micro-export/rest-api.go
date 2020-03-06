@@ -51,10 +51,6 @@ type Picture struct {
 	Unreadable bool
 }
 
-type PictureArray struct {
-	Pictures []Picture
-}
-
 func exportPiFF(w http.ResponseWriter, r *http.Request) {
 	// get all PiFF from database
 	client := &http.Client{}
@@ -92,7 +88,7 @@ func exportPiFF(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// transform json into struct
-	var piFFData PictureArray
+	var piFFData []Picture
 	err = json.Unmarshal(body, &piFFData)
 	if err != nil {
 		log.Printf("[ERROR] Unmarshal data: %v", err.Error())
@@ -106,7 +102,7 @@ func exportPiFF(w http.ResponseWriter, r *http.Request) {
 	writer := zip.NewWriter(outFile)
 
 	// add files to zip
-	for _, picture := range piFFData.Pictures {
+	for _, picture := range piFFData {
 		// get image variables
 		imageURL := picture.Url
 		imagePath := ""
