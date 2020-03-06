@@ -138,7 +138,7 @@ func exportPiFF(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		log.Printf("[PIFF READ] %v", piFF)
+		log.Printf("[PIFF READ] %v", string(piFF))
 
 		_, err = file.Write(piFF)
 		if err != nil {
