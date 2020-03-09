@@ -112,8 +112,6 @@ func exportPiFF(w http.ResponseWriter, r *http.Request) {
 		segments = strings.Split(imageNameWithExt, ".")
 		imageName := segments[len(segments)-2] // image name without extension
 
-		log.Printf("[IMAGE NAMES] %v %v", imageNameWithExt, imageName)
-
 		if picture.Unreadable { // if unreadable, we store the image and the file in a different folder
 			imagePath = "Unreadable/"
 		}
@@ -134,8 +132,6 @@ func exportPiFF(w http.ResponseWriter, r *http.Request) {
 			w.Write([]byte("[MICRO-EXPORT] Marshal piFF: " + err.Error()))
 			return
 		}
-
-		log.Printf("[PIFF READ] %v", string(piFF))
 
 		_, err = file.Write(piFF)
 		if err != nil {
