@@ -6,11 +6,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
+	"image"
+	"image/jpeg"
+	"image/png"
 	"io"
 	"io/ioutil"
 	"os"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 )
@@ -120,6 +124,7 @@ func exportPiFF(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// add file to zip
+
 		file, err := writer.Create(imagePath + imageName + ".piff")
 		if err != nil {
 			log.Printf("[ERROR] Create piFF: %v", err.Error())
@@ -145,13 +150,6 @@ func exportPiFF(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// add image to zip
-		image, err := ioutil.ReadFile(imageURL)
-		if err != nil {
-			log.Printf("[ERROR] Read image: %v", err.Error())
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte("[MICRO-EXPORT] Read image: " + err.Error()))
-			return
-		}
 
 		file, err = writer.Create(imagePath + imageNameWithExt)
 		if err != nil {
@@ -161,14 +159,46 @@ func exportPiFF(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		_, err = file.Write(image)
+		// open image in file server
+		imageFile, err := os.Open(imageURL)
 		if err != nil {
-			log.Printf("[ERROR] Write image: %v", err.Error())
+			log.Printf("[ERROR] Open image: %v", err.Error())
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte("[MICRO-EXPORT] Write image: " + err.Error()))
+			w.Write([]byte("[MICRO-EXPORT] Open image: " + err.Error()))
 			return
 		}
 
+		// read image
+		imageData, imageExt, err := image.Decode(imageFile)
+		if err != nil {
+			log.Printf("[ERROR] Decode image: %v", err.Error())
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte("[MICRO-EXPORT] Decode image: " + err.Error()))
+			return
+		}
+
+		// copy image data into image file according to its extension
+		switch imageExt {
+		case "jpeg":
+			jpeg.Encode(file, imageData, nil)
+			break
+		case "png":
+			png.Encode(file, imageData)
+			break
+		default:
+			log.Printf("[ERROR] Switch image type: unhandled format (" + imageExt + ")")
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte("[MICRO-EXPORT] Switch image type: unhandled format (" + imageExt + ")"))
+			return
+		}
+
+		err = imageFile.Close()
+		if err != nil {
+			log.Printf("[ERROR] Close image: %v", err.Error())
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte("[MICRO-EXPORT] Close image: " + err.Error()))
+			return
+		}
 	}
 
 	// close writer
