@@ -61,7 +61,7 @@ type PictureArray struct {
 func exportPiFF(w http.ResponseWriter, r *http.Request) {
 	// get all PiFF from database
 	client := &http.Client{}
-	request, err := http.NewRequest(http.MethodGet, "http://database-api.gitlab-managed-apps.svc.cluster.local:8080/db/retrieve/all", nil)
+	request, err := http.NewRequest(http.MethodGet, DatabaseAPI + "/db/retrieve/all", nil)
 	if err != nil {
 		log.Printf("[ERROR] Get request: %v", err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
