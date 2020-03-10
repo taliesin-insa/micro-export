@@ -11,7 +11,6 @@ import (
 	"image/png"
 	"io"
 	"io/ioutil"
-	"os"
 	"log"
 	"net/http"
 	"os"
