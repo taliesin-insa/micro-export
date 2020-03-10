@@ -22,14 +22,59 @@ spec:
     spec:
       containers:
         - name: export
-          image: clyde.local:5005/taliesin/micro-export/master
+          image: clyde.local:5005/taliesin/micro-export/master:prod
           ports:
             - containerPort: 22022
           volumeMounts:
             - mountPath: "/snippets/"
               name: file-server
+          env:
+            - name: MICRO_ENVIRONMENT
+              value: "production"
+            - name: DATABASE_API_URL
+              value: "http://database-api.gitlab-managed-apps.svc.cluster.local:8080"
       volumes:
         - name: file-server
           persistentVolumeClaim:
             claimName: file-server-claim
-
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: export-dev
+  namespace: gitlab-managed-apps
+  labels:
+    app: export-dev
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: export-dev
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 33%
+  template:
+    metadata:
+      labels:
+        app: export-dev
+    spec:
+      containers:
+        - name: export-dev
+          image: clyde.local:5005/taliesin/micro-export/master:dev
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 22022
+          volumeMounts:
+            - mountPath: "/snippets/"
+              name: file-server-dev
+          env:
+            - name: MICRO_ENVIRONMENT
+              value: "dev"
+            - name: DATABASE_API_URL
+              value: "http://database-dev-api.gitlab-managed-apps.svc.cluster.local:8080"
+      volumes:
+        - name: file-server-dev
+          persistentVolumeClaim:
+            claimName: file-server-dev-claim

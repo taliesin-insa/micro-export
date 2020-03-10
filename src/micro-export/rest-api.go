@@ -8,11 +8,14 @@ import (
 	"github.com/gorilla/mux"
 	"io"
 	"io/ioutil"
+	"os"
 	"log"
 	"net/http"
 	"strconv"
 	"strings"
 )
+
+var DatabaseAPI string
 
 type Meta struct {
 	Type string
@@ -58,7 +61,7 @@ type PictureArray struct {
 func exportPiFF(w http.ResponseWriter, r *http.Request) {
 	// get all PiFF from database
 	client := &http.Client{}
-	request, err := http.NewRequest(http.MethodGet, "http://database-api.gitlab-managed-apps.svc.cluster.local:8080/db/retrieve/all", nil)
+	request, err := http.NewRequest(http.MethodGet, DatabaseAPI + "/db/retrieve/all", nil)
 	if err != nil {
 		log.Printf("[ERROR] Get request: %v", err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
@@ -193,6 +196,14 @@ func homeLink(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	dbEnvVal, dbEnvExists := os.LookupEnv("DATABASE_API_URL")
+
+	if dbEnvExists {
+		DatabaseAPI = dbEnvVal
+	} else {
+		DatabaseAPI = "http://database-api.gitlab-managed-apps.svc.cluster.local:8080"
+	}
+
 	router := mux.NewRouter().StrictSlash(true)
 	router.HandleFunc("/export/piff", exportPiFF).Methods("GET")
 	router.HandleFunc("/", homeLink).Methods("GET")
