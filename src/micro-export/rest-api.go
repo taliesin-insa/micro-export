@@ -60,11 +60,11 @@ type Picture struct {
 func exportPiFF(w http.ResponseWriter, r *http.Request) {
 	// get all PiFF from database
 	client := &http.Client{}
-	request, err := http.NewRequest(http.MethodGet, DatabaseAPI + "/db/retrieve/all", nil)
+	request, err := http.NewRequest(http.MethodGet, DatabaseAPI+"/db/retrieve/all", nil)
 	if err != nil {
 		log.Printf("[ERROR] Get request: %v", err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("[MICRO-EXPORT] Get request: " + err.Error()))
+		w.Write([]byte("[MICRO-EXPORT] Couldn't get request"))
 		return
 	}
 
@@ -72,7 +72,7 @@ func exportPiFF(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("[ERROR] Do request: %v", err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("[MICRO-EXPORT] Do request: " + err.Error()))
+		w.Write([]byte("[MICRO-EXPORT] Couldn't do request"))
 		return
 	}
 
@@ -81,7 +81,7 @@ func exportPiFF(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("[ERROR] Read data: %v", err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("[MICRO-EXPORT] Read data: " + err.Error()))
+		w.Write([]byte("[MICRO-EXPORT] Couldn't read data"))
 		return
 	}
 
@@ -99,7 +99,7 @@ func exportPiFF(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("[ERROR] Unmarshal data: %v", err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("[MICRO-EXPORT] Unmarshal data: " + err.Error()))
+		w.Write([]byte("[MICRO-EXPORT] Couldn't unmarshal data"))
 		return
 	}
 
@@ -128,7 +128,7 @@ func exportPiFF(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Printf("[ERROR] Create piFF: %v", err.Error())
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte("[MICRO-EXPORT] Create piFF: " + err.Error()))
+			w.Write([]byte("[MICRO-EXPORT] Couldn't create piFF"))
 			return
 		}
 
@@ -136,7 +136,7 @@ func exportPiFF(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Printf("[ERROR] Marshal piFF: %v", err.Error())
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte("[MICRO-EXPORT] Marshal piFF: " + err.Error()))
+			w.Write([]byte("[MICRO-EXPORT] Couldn't marshal piFF"))
 			return
 		}
 
@@ -144,7 +144,7 @@ func exportPiFF(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Printf("[ERROR] Write piFF: %v", err.Error())
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte("[MICRO-EXPORT] Write piFF: " + err.Error()))
+			w.Write([]byte("[MICRO-EXPORT] Couldn't write piFF"))
 			return
 		}
 
@@ -154,7 +154,7 @@ func exportPiFF(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Printf("[ERROR] Create image: %v", err.Error())
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte("[MICRO-EXPORT] Create image: " + err.Error()))
+			w.Write([]byte("[MICRO-EXPORT] Couldn't create image"))
 			return
 		}
 
@@ -163,7 +163,7 @@ func exportPiFF(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Printf("[ERROR] Open image: %v", err.Error())
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte("[MICRO-EXPORT] Open image: " + err.Error()))
+			w.Write([]byte("[MICRO-EXPORT] Couldn't open image"))
 			return
 		}
 
@@ -172,7 +172,7 @@ func exportPiFF(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Printf("[ERROR] Decode image: %v", err.Error())
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte("[MICRO-EXPORT] Decode image: " + err.Error()))
+			w.Write([]byte("[MICRO-EXPORT] Couldn't decode image"))
 			return
 		}
 
@@ -187,7 +187,7 @@ func exportPiFF(w http.ResponseWriter, r *http.Request) {
 		default:
 			log.Printf("[ERROR] Switch image type: unhandled format (" + imageExt + ")")
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte("[MICRO-EXPORT] Switch image type: unhandled format (" + imageExt + ")"))
+			w.Write([]byte("[MICRO-EXPORT] Couldn't handle format " + imageExt))
 			return
 		}
 
@@ -195,7 +195,7 @@ func exportPiFF(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Printf("[ERROR] Close image: %v", err.Error())
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte("[MICRO-EXPORT] Close image: " + err.Error()))
+			w.Write([]byte("[MICRO-EXPORT] Couldn't close image"))
 			return
 		}
 	}
@@ -205,7 +205,7 @@ func exportPiFF(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("[ERROR] Close writer: %v", err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("[MICRO-EXPORT] Close writer: " + err.Error()))
+		w.Write([]byte("[MICRO-EXPORT] Couldn't close writer"))
 		return
 	}
 
