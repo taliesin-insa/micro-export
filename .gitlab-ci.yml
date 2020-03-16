@@ -19,9 +19,9 @@ build:
   script:
     - docker login -u nobody -p nobody ${REGISTRY_HOST}
     - docker build -t ${CONTAINER_IMAGE_SHA} .
-    - docker tag ${CONTAINER_IMAGE_SHA} ${CONTAINER_IMAGE}:latest
+    - docker tag ${CONTAINER_IMAGE_SHA} ${CONTAINER_IMAGE}:dev
     - docker push ${CONTAINER_IMAGE_SHA}
-    - docker push ${CONTAINER_IMAGE}:latest
+    - docker push ${CONTAINER_IMAGE}:dev
 
 dev:
   stage: dev
