@@ -4,10 +4,7 @@ Microservice of export developed with Go:
 - get all PiFF files 
 
 ## Exposed REST API
-**GET */export/piff***  
-Get a zip file containing all associations *image/PiFF* in the database  
-**Request body**: nothing  
-**Returned data**: a zip file
+See the API documentation in API Blueprint format [here](api.md).
 
 
 ## Commits
@@ -16,6 +13,7 @@ The title of a commit must follow this pattern : \<type>(\<scope>): \<subject>
 ### Type
 Commits must specify their type among the following:
 * **build**: changes that affect the build system or external dependencies
+* **debug**: a code change to debug (logs, etc.)
 * **docs**: documentation only changes
 * **feat**: a new feature
 * **fix**: a bug fix
