@@ -3,14 +3,14 @@ API for the microservice exporting zip archive containing all images with their 
 The possible descriptive file format are:
 * piFF
 
-## Home Link [/db]
+## Home Link [/export]
 Simple method to test whether the Go API is runing correctly
 
 ### [GET]
 + Response 200 (text/plain)  
 	+ Body  
     	~~~
-    	Welcome home!
+    	[MICRO-EXPORT] Welcome home!
     	~~~
 
 ## Export image with their piFF file [/export/piff]
