@@ -217,7 +217,7 @@ func exportPiFF(w http.ResponseWriter, r *http.Request) {
 
 // function to test whether docker file is correctly built
 func homeLink(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Welcome home!")
+	fmt.Fprintf(w, "[MICRO-EXPORT] Welcome home!")
 }
 
 func main() {
@@ -231,6 +231,6 @@ func main() {
 
 	router := mux.NewRouter().StrictSlash(true)
 	router.HandleFunc("/export/piff", exportPiFF).Methods("GET")
-	router.HandleFunc("/", homeLink).Methods("GET")
+	router.HandleFunc("/export", homeLink).Methods("GET")
 	log.Fatal(http.ListenAndServe(":22022", router))
 }
