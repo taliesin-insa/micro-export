@@ -13,6 +13,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -44,7 +45,8 @@ var EmptyPiFF = PiFFStruct{
 	Parent:   0,
 }
 
-var imagePath = "./MICRO_EXPORT_TMP.png"
+var imagePath string
+var imageName string
 
 var recorder *httptest.ResponseRecorder
 
@@ -66,11 +68,16 @@ func TestMain(m *testing.M) { // executed before all tests
 	}
 
 	// save temporary the images
-	imageFile, err := os.Create(imagePath)
+	imageFile, err := ioutil.TempFile("", "MICRO_EXPORT_TEST_*.png") // name must have an extension for the export, see doc for the '*' explanation
 	if err != nil {
 		log.Printf("[TEST_ERROR] Create the original image: %v", err.Error())
 		panic(m)
 	}
+	imagePath = imageFile.Name()
+	segments := strings.Split(imagePath, "/")
+	imageName = segments[len(segments)-1] // image name with extension
+	segments = strings.Split(imageName, ".")
+	imageName = segments[len(segments)-2] // image name without extension
 
 	err = png.Encode(imageFile, image)
 	if err != nil {
@@ -164,7 +171,7 @@ func TestExportPiFFFormat(t *testing.T) {
 	}
 
 	// test file names
-	names := []string{"MICRO_EXPORT_TMP.piff", "MICRO_EXPORT_TMP.png", "Unreadable/MICRO_EXPORT_TMP.piff", "Unreadable/MICRO_EXPORT_TMP.png"}
+	names := []string{imageName + ".piff", imageName + ".png", "Unreadable/" + imageName + ".piff", "Unreadable/" + imageName + ".png"}
 
 	for i := 0; i < len(files); i++ {
 		if names[i] != files[i].Name {
