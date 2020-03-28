@@ -77,6 +77,13 @@ func exportPiFF(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// get body of returned data
+	if response.Body == nil {
+		log.Printf("[ERROR] Returned body is null")
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("[MICRO-EXPORT] Couldn't read returned data (body is null)"))
+		return
+	}
+
 	body, err := ioutil.ReadAll(response.Body)
 	if err != nil {
 		log.Printf("[ERROR] Read data: %v", err.Error())
