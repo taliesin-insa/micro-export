@@ -121,9 +121,7 @@ func exportPiFF(w http.ResponseWriter, r *http.Request) {
 		// get image variables
 		imagePath := ""
 
-		segments := strings.Split(picture.Filename, "/")
-		imageNameWithExt := segments[len(segments)-1] // image name with extension
-		segments = strings.Split(imageNameWithExt, ".")
+		segments := strings.Split(picture.Filename, ".")
 		imageName := segments[len(segments)-2] // image name without extension
 
 		if picture.Unreadable { // if unreadable, we store the image and the file in a different folder
@@ -158,7 +156,7 @@ func exportPiFF(w http.ResponseWriter, r *http.Request) {
 
 		// add image to zip
 
-		file, err = writer.Create(imagePath + imageNameWithExt)
+		file, err = writer.Create(imagePath + picture.Filename)
 		if err != nil {
 			log.Printf("[ERROR] Create image: %v", err.Error())
 			w.WriteHeader(http.StatusInternalServerError)
