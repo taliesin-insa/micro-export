@@ -50,11 +50,13 @@ type Picture struct {
 	_id        []byte
 	PiFF       PiFFStruct
 	Url        string
+	Filename   string
 	Annotated  bool
 	Corrected  bool
 	SentToReco bool
 	SentToUser bool
 	Unreadable bool
+	Annotator  string
 }
 
 func exportPiFF(w http.ResponseWriter, r *http.Request) {
@@ -117,10 +119,9 @@ func exportPiFF(w http.ResponseWriter, r *http.Request) {
 	// add files to zip
 	for _, picture := range piFFData {
 		// get image variables
-		imageURL := picture.Url
 		imagePath := ""
 
-		segments := strings.Split(imageURL, "/")
+		segments := strings.Split(picture.Filename, "/")
 		imageNameWithExt := segments[len(segments)-1] // image name with extension
 		segments = strings.Split(imageNameWithExt, ".")
 		imageName := segments[len(segments)-2] // image name without extension
@@ -166,7 +167,7 @@ func exportPiFF(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// open image in file server
-		imageFile, err := os.Open(imageURL)
+		imageFile, err := os.Open(picture.Url)
 		if err != nil {
 			log.Printf("[ERROR] Open image: %v", err.Error())
 			w.WriteHeader(http.StatusInternalServerError)
