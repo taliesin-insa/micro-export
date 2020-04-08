@@ -14,6 +14,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 )
@@ -121,8 +122,7 @@ func exportPiFF(w http.ResponseWriter, r *http.Request) {
 		// get image variables
 		imagePath := ""
 
-		segments := strings.Split(picture.Filename, ".")
-		imageName := segments[len(segments)-2] // image name without extension
+		imageName := strings.TrimSuffix(picture.Filename, filepath.Ext(picture.Filename)) // image name without extension, filepath.Ext returns the extension of a path (returns ".png" for "image.png")
 
 		if picture.Unreadable { // if unreadable, we store the image and the file in a different folder
 			imagePath = "Unreadable/"
