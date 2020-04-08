@@ -13,7 +13,6 @@ import (
 	"net/http/httptest"
 	"os"
 	"reflect"
-	"strings"
 	"testing"
 )
 
@@ -74,10 +73,7 @@ func TestMain(m *testing.M) { // executed before all tests
 		panic(m)
 	}
 	imagePath = imageFile.Name()
-	segments := strings.Split(imagePath, "/")
-	imageName = segments[len(segments)-1] // image name with extension
-	segments = strings.Split(imageName, ".")
-	imageName = segments[len(segments)-2] // image name without extension
+	imageName = "original_image_name"
 
 	err = png.Encode(imageFile, image)
 	if err != nil {
@@ -96,12 +92,14 @@ func TestMain(m *testing.M) { // executed before all tests
 		PiFF:       EmptyPiFF,
 		Url:        imagePath,
 		Unreadable: false,
+		Filename:   imageName + ".png", // add fake extension
 	}
 
 	unreadablePicture := Picture{
 		PiFF:       EmptyPiFF,
 		Url:        imagePath,
 		Unreadable: true,
+		Filename:   imageName + ".png", // add fake extension
 	}
 
 	// fake server to replace the database call
