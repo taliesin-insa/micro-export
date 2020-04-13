@@ -134,7 +134,7 @@ func exportPiFF(w http.ResponseWriter, r *http.Request) {
 		namesMap[imagePath+imageName] = namesMap[imagePath+imageName] + 1
 		occurrence := namesMap[imagePath+imageName]
 		if occurrence > 1 { // file already exist
-			imageName = imageName + " (" + string(occurrence) + ")"
+			imageName = imageName + " (" + strconv.Itoa(occurrence) + ")"
 		}
 
 		// add file to zip
@@ -165,14 +165,6 @@ func exportPiFF(w http.ResponseWriter, r *http.Request) {
 
 		// add image to zip
 
-		file, err = writer.Create(imagePath + picture.Filename)
-		if err != nil {
-			log.Printf("[ERROR] Create image: %v", err.Error())
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte("[MICRO-EXPORT] Couldn't create image"))
-			return
-		}
-
 		// open image in file server
 		imageFile, err := os.Open(picture.Url)
 		if err != nil {
@@ -194,9 +186,25 @@ func exportPiFF(w http.ResponseWriter, r *http.Request) {
 		// copy image data into image file according to its extension
 		switch imageExt {
 		case "jpeg":
+			file, err = writer.Create(imagePath + imageName + ".jpg")
+			if err != nil {
+				log.Printf("[ERROR] Create image: %v", err.Error())
+				w.WriteHeader(http.StatusInternalServerError)
+				w.Write([]byte("[MICRO-EXPORT] Couldn't create image"))
+				return
+			}
+
 			jpeg.Encode(file, imageData, nil)
 			break
 		case "png":
+			file, err = writer.Create(imagePath + imageName + ".png")
+			if err != nil {
+				log.Printf("[ERROR] Create image: %v", err.Error())
+				w.WriteHeader(http.StatusInternalServerError)
+				w.Write([]byte("[MICRO-EXPORT] Couldn't create image"))
+				return
+			}
+
 			png.Encode(file, imageData)
 			break
 		default:
