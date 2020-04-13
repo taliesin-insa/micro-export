@@ -117,6 +117,8 @@ func exportPiFF(w http.ResponseWriter, r *http.Request) {
 	outFile := new(bytes.Buffer)
 	writer := zip.NewWriter(outFile)
 
+	namesMap := make(map[string]int) // to check names which already exist
+
 	// add files to zip
 	for _, picture := range piFFData {
 		// get image variables
@@ -126,6 +128,13 @@ func exportPiFF(w http.ResponseWriter, r *http.Request) {
 
 		if picture.Unreadable { // if unreadable, we store the image and the file in a different folder
 			imagePath = "Unreadable/"
+		}
+
+		// change name if file already exist
+		namesMap[imagePath+imageName] = namesMap[imagePath+imageName] + 1
+		occurrence := namesMap[imagePath+imageName]
+		if occurrence > 1 { // file already exist
+			imageName = imageName + " (" + string(occurrence) + ")"
 		}
 
 		// add file to zip
