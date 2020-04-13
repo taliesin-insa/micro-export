@@ -126,6 +126,8 @@ func exportPiFF(w http.ResponseWriter, r *http.Request) {
 
 		if picture.Unreadable { // if unreadable, we store the image and the file in a different folder
 			imagePath = "Unreadable/"
+		} else if picture.Annotator == "$taliesin_recognizer" {
+			imagePath = "Uncorrected/"
 		}
 
 		// add file to zip
