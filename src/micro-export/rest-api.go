@@ -134,7 +134,7 @@ func exportPiFF(w http.ResponseWriter, r *http.Request) {
 		namesMap[imagePath+imageName] = namesMap[imagePath+imageName] + 1
 		occurrence := namesMap[imagePath+imageName]
 		if occurrence > 1 { // file already exist
-			imageName = imageName + " (" + strconv.Itoa(occurrence) + ")"
+			imageName = imageName + "_" + strconv.Itoa(occurrence)
 		}
 
 		// add file to zip
