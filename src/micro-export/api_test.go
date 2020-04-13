@@ -93,6 +93,7 @@ func TestMain(m *testing.M) { // executed before all tests
 		Url:        imagePath,
 		Unreadable: false,
 		Filename:   imageName + ".png", // add fake extension
+		Annotator:  "someone",
 	}
 
 	unreadablePicture := Picture{
@@ -102,12 +103,20 @@ func TestMain(m *testing.M) { // executed before all tests
 		Filename:   imageName + ".png", // add fake extension
 	}
 
+	uncorrectedPicture := Picture{
+		PiFF:       EmptyPiFF,
+		Url:        imagePath,
+		Unreadable: false,
+		Filename:   imageName + ".png", // add fake extension
+		Annotator:  "$taliesin_recognizer",
+	}
+
 	// fake server to replace the database call
 	mockedServer := httptest.NewServer(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if r.URL.Path == "/db/retrieve/all" {
 
-				piFFArray := []Picture{readablePicture, unreadablePicture}
+				piFFArray := []Picture{readablePicture, readablePicture, unreadablePicture, uncorrectedPicture}
 				piFFJSON, err := json.Marshal(piFFArray)
 				if err != nil {
 					log.Printf("[TEST_ERROR] Create mocked server: %v", err.Error())
@@ -169,7 +178,15 @@ func TestExportPiFFFormat(t *testing.T) {
 	}
 
 	// test file names
-	names := []string{imageName + ".piff", imageName + ".png", "Unreadable/" + imageName + ".piff", "Unreadable/" + imageName + ".png"}
+	names := []string{
+		imageName + ".piff",
+		imageName + ".png",
+		imageName + "_2.piff",
+		imageName + "_2.png",
+		"Unreadable/" + imageName + ".piff",
+		"Unreadable/" + imageName + ".png",
+		"Uncorrected/" + imageName + ".piff",
+		"Uncorrected/" + imageName + ".png"}
 
 	for i := 0; i < len(files); i++ {
 		if names[i] != files[i].Name {
