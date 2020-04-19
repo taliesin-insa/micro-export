@@ -126,10 +126,12 @@ func exportPiFF(w http.ResponseWriter, r *http.Request) {
 
 		imageName := strings.TrimSuffix(picture.Filename, filepath.Ext(picture.Filename)) // image name without extension, filepath.Ext returns the extension of a path (returns ".png" for "image.png")
 
-		if picture.Unreadable { // if unreadable, we store the image and the file in a different folder
+		if picture.Unreadable { // was marked as unreadable
 			imagePath = "Unreadable/"
-		} else if picture.Annotator == "$taliesin_recognizer" {
+		} else if picture.Annotator == "$taliesin_recognizer" { // was annotated by the recognizer but not corrected
 			imagePath = "Uncorrected/"
+		} else if picture.Annotator == "" { // wasn't annotated
+			imagePath = "Unannotated/"
 		}
 
 		// change name if file already exist
