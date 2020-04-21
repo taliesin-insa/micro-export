@@ -4,6 +4,7 @@ import (
 	"archive/zip"
 	"bytes"
 	"encoding/json"
+	lib_auth "github.com/taliesin-insa/lib-auth"
 	"image"
 	"image/color"
 	"image/png"
@@ -13,6 +14,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"reflect"
+	"strconv"
 	"testing"
 )
 
@@ -145,11 +147,52 @@ func TestMain(m *testing.M) { // executed before all tests
 		Method: http.MethodGet,
 	}
 
+	request.Header = make(http.Header)
+	request.Header.Set("Authorization", strconv.Itoa(lib_auth.RoleAdmin))
+
 	// make http request
 	recorder = httptest.NewRecorder()
 	exportPiFF(recorder, request)
 
 	os.Exit(m.Run())
+}
+
+func TestExportPiFFWithoutAuth(t *testing.T) {
+	request := &http.Request{
+		Method: http.MethodGet,
+	}
+
+	request.Header = make(http.Header)
+	request.Header.Set("Authorization", "")
+
+	// make http request
+	recorder = httptest.NewRecorder()
+	exportPiFF(recorder, request)
+
+	// status test
+	if status := recorder.Code; status != http.StatusBadRequest {
+		t.Errorf("[TEST_ERROR] Handler returned wrong status code: got %v want %v",
+			status, http.StatusBadRequest)
+	}
+}
+
+func TestExportPiFFBadAuth(t *testing.T) {
+	request := &http.Request{
+		Method: http.MethodGet,
+	}
+
+	request.Header = make(http.Header)
+	request.Header.Set("Authorization", strconv.Itoa(lib_auth.RoleAnnotator))
+
+	// make http request
+	recorder = httptest.NewRecorder()
+	exportPiFF(recorder, request)
+
+	// status test
+	if status := recorder.Code; status != http.StatusUnauthorized {
+		t.Errorf("[TEST_ERROR] Handler returned wrong status code: got %v want %v",
+			status, http.StatusUnauthorized)
+	}
 }
 
 func TestExportPiFFStatus(t *testing.T) {
@@ -178,11 +221,13 @@ func TestExportPiFFFormat(t *testing.T) {
 	body := recorder.Body
 	if body == nil {
 		t.Errorf("[TEST_ERROR] Handler returned nil body")
+		return
 	}
 
 	files, err := getZipFiles(body)
 	if err != nil {
 		t.Errorf("[TEST_ERROR] Handler returned a body which isn't a correct zip: %v", err.Error())
+		return
 	}
 
 	// test file names
@@ -202,6 +247,7 @@ func TestExportPiFFFormat(t *testing.T) {
 		if names[i] != files[i].Name {
 			t.Errorf("[TEST_ERROR] Handler returned wrong file name: got %v want %v",
 				files[i].Name, names[i])
+			return
 		}
 	}
 }
@@ -214,26 +260,31 @@ func TestExportPiFFFileContent(t *testing.T) {
 		file, err := files[i].Open()
 		if err != nil {
 			t.Errorf("[TEST_ERROR] Open file %v: .%v", files[i].Name, err.Error())
+			return
 		}
 
 		content, err := ioutil.ReadAll(file)
 		if err != nil {
 			t.Errorf("[TEST_ERROR] Read file %v: %v", files[i].Name, err.Error())
+			return
 		}
 
 		if file.Close() != nil {
 			t.Errorf("[TEST_ERROR] Close %v: %v", files[i].Name, err.Error())
+			return
 		}
 
 		var piFFContent PiFFStruct
 		err = json.Unmarshal(content, &piFFContent)
 		if err != nil {
 			t.Errorf("[TEST_ERROR] Handler returned an file %v which wasn't a piFF: %v", files[i].Name, err.Error())
+			return
 		}
 
 		if piFFContent.Data[0].Value != "TEST MICRO EXPORT" {
 			t.Errorf("[TEST_ERROR] Handler returned wrong value for file %v, got %v want %v",
 				files[i].Name, piFFContent.Data[0].Value, EmptyPiFF.Data[0].Value)
+			return
 		}
 	}
 
@@ -246,11 +297,13 @@ func TestExportPiFFImageContent(t *testing.T) {
 	originalImage, err := os.Open(imagePath)
 	if err != nil {
 		t.Errorf("[TEST_ERROR] Open the original image: %v", err.Error())
+		return
 	}
 
 	originalContent, err := png.Decode(originalImage)
 	if err != nil {
 		t.Errorf("[TEST_ERROR] Decode the original image: %v", err.Error())
+		return
 	}
 
 	// test image content
@@ -258,21 +311,25 @@ func TestExportPiFFImageContent(t *testing.T) {
 		image, err := files[i].Open()
 		if err != nil {
 			t.Errorf("[TEST_ERROR] Open image %v: %v", files[i].Name, err.Error())
+			return
 		}
 
 		imageContent, err := png.Decode(image)
 		if err != nil {
 			t.Errorf("[TEST_ERROR] Read image %v: %v", files[i].Name, err.Error())
+			return
 		}
 
 		if !reflect.DeepEqual(imageContent, originalContent) {
 			t.Errorf("[TEST_ERROR] Handler returned wrong image %v: %v", files[i].Name, err.Error())
+			return
 		}
 	}
 
 	// close and delete image because tests are finished
 	if originalImage.Close() != nil {
 		t.Errorf("[TEST_ERROR] Close the original image during test: %v", err.Error())
+		return
 	}
 
 	if os.Remove(imagePath) != nil {
