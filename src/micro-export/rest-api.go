@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
+	"github.com/taliesin-insa/lib-auth"
 	"image"
 	"image/jpeg"
 	"image/png"
@@ -61,6 +62,24 @@ type Picture struct {
 }
 
 func exportPiFF(w http.ResponseWriter, r *http.Request) {
+	user, err, authStatusCode := lib_auth.AuthenticateUser(r)
+
+	// check if there was an error during the authentication or if the user wasn't authenticated
+	if err != nil {
+		log.Printf("[ERROR] Check authentication: %v", err.Error())
+		w.WriteHeader(authStatusCode)
+		w.Write([]byte("[MICRO-EXPORT] Couldn't verify identity"))
+		return
+	}
+
+	// check if the authenticated user has sufficient permissions to
+	if user.Role != lib_auth.RoleAdmin {
+		log.Printf("[WRONG_ROLE] Insufficient permission: want %v, was %v", lib_auth.RoleAdmin, user.Role)
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write([]byte("[MICRO-EXPORT] Insufficient permissions to export"))
+		return
+	}
+
 	// get all PiFF from database
 	client := &http.Client{}
 	request, err := http.NewRequest(http.MethodGet, DatabaseAPI+"/db/retrieve/all", nil)
