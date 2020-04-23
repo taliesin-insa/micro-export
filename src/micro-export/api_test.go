@@ -14,9 +14,13 @@ import (
 	"net/http/httptest"
 	"os"
 	"reflect"
-	"strconv"
 	"testing"
 )
+
+// for mockedAuthServer
+type VerifyRequest struct {
+	Token string
+}
 
 var EmptyPiFF = PiFFStruct{
 	Meta: Meta{
@@ -122,14 +126,14 @@ func TestMain(m *testing.M) { // executed before all tests
 	}
 
 	// fake server to replace the database call
-	mockedServer := httptest.NewServer(
+	mockedDatabaseServer := httptest.NewServer(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if r.URL.Path == "/db/retrieve/all" {
 
 				piFFArray := []Picture{readablePicture, readablePicture, unreadablePicture, uncorrectedPicture, unannotatedPicture}
 				piFFJSON, err := json.Marshal(piFFArray)
 				if err != nil {
-					log.Printf("[TEST_ERROR] Create mocked server: %v", err.Error())
+					log.Printf("[TEST_ERROR] Create database mocked server: %v", err.Error())
 					panic(m)
 				}
 
@@ -141,55 +145,84 @@ func TestMain(m *testing.M) { // executed before all tests
 		}))
 
 	// replace the redirect to database microservice
-	DatabaseAPI = mockedServer.URL
+	DatabaseAPI = mockedDatabaseServer.URL
+
+	// fake server to replace the authentication call (in lib_auth)
+	mockedAuthServer := httptest.NewServer(
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.URL.Path == "/auth/verifyToken" {
+				reqBody, err := ioutil.ReadAll(r.Body)
+				if err != nil {
+					log.Printf("[TEST_ERROR] Create authentication mocked server (read body): %v", err.Error())
+					panic(m)
+				}
+
+				var reqData VerifyRequest
+				err = json.Unmarshal(reqBody, &reqData)
+				if err != nil {
+					log.Printf("[TEST_ERROR] Create authentication mocked server (unmarsal body): %v", err.Error())
+					panic(m)
+				}
+
+				var result []byte
+				if reqData.Token == "admin_token" {
+					result, err = json.Marshal(lib_auth.UserData{Username: "morpheus", Role: lib_auth.RoleAdmin})
+				} else {
+					result, err = json.Marshal(lib_auth.UserData{Username: "morpheus", Role: lib_auth.RoleAnnotator})
+				}
+
+				if err != nil {
+					log.Printf("[TEST_ERROR] Create authentication mocked server (marshal result): %v", err.Error())
+					panic(m)
+				}
+
+				w.WriteHeader(http.StatusOK)
+				w.Write(result)
+			}
+		}))
+
+	// replace the redirect to authentication microservice
+	previousAuthUrl := os.Getenv("AUTH_API_URL")
+	os.Setenv("AUTH_API_URL", mockedAuthServer.URL)
 
 	request := &http.Request{
 		Method: http.MethodGet,
+		Header: map[string][]string{
+			"Authorization": {"admin_token"},
+		},
 	}
-
-	request.Header = make(http.Header)
-	request.Header.Set("Authorization", strconv.Itoa(lib_auth.RoleAdmin))
 
 	// make http request
 	recorder = httptest.NewRecorder()
 	exportPiFF(recorder, request)
 
-	os.Exit(m.Run())
-}
+	code := m.Run()
 
-func TestExportPiFFWithoutAuth(t *testing.T) {
-	request := &http.Request{
-		Method: http.MethodGet,
+	// delete image because tests are finished
+	if os.Remove(imagePath) != nil {
+		log.Printf("[TEST_ERROR] Delete the original image: %v", err.Error())
+		panic(m)
 	}
 
-	request.Header = make(http.Header)
-	request.Header.Set("Authorization", "")
-
-	// make http request
-	recorder = httptest.NewRecorder()
-	exportPiFF(recorder, request)
-
-	// status test
-	if status := recorder.Code; status != http.StatusBadRequest {
-		t.Errorf("[TEST_ERROR] Handler returned wrong status code: got %v want %v",
-			status, http.StatusBadRequest)
-	}
+	// replace the real authentication url
+	os.Setenv("AUTH_API_URL", previousAuthUrl)
+	os.Exit(code)
 }
 
 func TestExportPiFFBadAuth(t *testing.T) {
-	request := &http.Request{
+	wrongAuthRequest := &http.Request{
 		Method: http.MethodGet,
+		Header: map[string][]string{
+			"Authorization": {"annotator_token"},
+		},
 	}
 
-	request.Header = make(http.Header)
-	request.Header.Set("Authorization", strconv.Itoa(lib_auth.RoleAnnotator))
-
 	// make http request
-	recorder = httptest.NewRecorder()
-	exportPiFF(recorder, request)
+	wrongAuthRecorder := httptest.NewRecorder()
+	exportPiFF(wrongAuthRecorder, wrongAuthRequest)
 
 	// status test
-	if status := recorder.Code; status != http.StatusUnauthorized {
+	if status := wrongAuthRecorder.Code; status != http.StatusUnauthorized {
 		t.Errorf("[TEST_ERROR] Handler returned wrong status code: got %v want %v",
 			status, http.StatusUnauthorized)
 	}
@@ -326,13 +359,9 @@ func TestExportPiFFImageContent(t *testing.T) {
 		}
 	}
 
-	// close and delete image because tests are finished
+	// close image
 	if originalImage.Close() != nil {
 		t.Errorf("[TEST_ERROR] Close the original image during test: %v", err.Error())
 		return
-	}
-
-	if os.Remove(imagePath) != nil {
-		t.Errorf("[TEST_ERROR] Delete the original image: %v", err.Error())
 	}
 }
