@@ -77,6 +77,7 @@ func exportPiFF(w http.ResponseWriter, r *http.Request) {
 		log.Printf("[WRONG_ROLE] Insufficient permission: want %v, was %v", lib_auth.RoleAdmin, user.Role)
 		w.WriteHeader(http.StatusUnauthorized)
 		w.Write([]byte("[MICRO-EXPORT] Insufficient permissions to export"))
+		return
 	}
 
 	// get all PiFF from database
