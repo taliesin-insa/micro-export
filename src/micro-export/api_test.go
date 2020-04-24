@@ -4,6 +4,7 @@ import (
 	"archive/zip"
 	"bytes"
 	"encoding/json"
+	lib_auth "github.com/taliesin-insa/lib-auth"
 	"image"
 	"image/color"
 	"image/png"
@@ -15,6 +16,11 @@ import (
 	"reflect"
 	"testing"
 )
+
+// for mockedAuthServer
+type VerifyRequest struct {
+	Token string
+}
 
 var EmptyPiFF = PiFFStruct{
 	Meta: Meta{
@@ -120,14 +126,14 @@ func TestMain(m *testing.M) { // executed before all tests
 	}
 
 	// fake server to replace the database call
-	mockedServer := httptest.NewServer(
+	mockedDatabaseServer := httptest.NewServer(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if r.URL.Path == "/db/retrieve/all" {
 
 				piFFArray := []Picture{readablePicture, readablePicture, unreadablePicture, uncorrectedPicture, unannotatedPicture}
 				piFFJSON, err := json.Marshal(piFFArray)
 				if err != nil {
-					log.Printf("[TEST_ERROR] Create mocked server: %v", err.Error())
+					log.Printf("[TEST_ERROR] Create database mocked server: %v", err.Error())
 					panic(m)
 				}
 
@@ -139,17 +145,87 @@ func TestMain(m *testing.M) { // executed before all tests
 		}))
 
 	// replace the redirect to database microservice
-	DatabaseAPI = mockedServer.URL
+	DatabaseAPI = mockedDatabaseServer.URL
+
+	// fake server to replace the authentication call (in lib_auth)
+	mockedAuthServer := httptest.NewServer(
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.URL.Path == "/auth/verifyToken" {
+				reqBody, err := ioutil.ReadAll(r.Body)
+				if err != nil {
+					log.Printf("[TEST_ERROR] Create authentication mocked server (read body): %v", err.Error())
+					panic(m)
+				}
+
+				var reqData VerifyRequest
+				err = json.Unmarshal(reqBody, &reqData)
+				if err != nil {
+					log.Printf("[TEST_ERROR] Create authentication mocked server (unmarsal body): %v", err.Error())
+					panic(m)
+				}
+
+				var result []byte
+				if reqData.Token == "admin_token" {
+					result, err = json.Marshal(lib_auth.UserData{Username: "morpheus", Role: lib_auth.RoleAdmin})
+				} else {
+					result, err = json.Marshal(lib_auth.UserData{Username: "morpheus", Role: lib_auth.RoleAnnotator})
+				}
+
+				if err != nil {
+					log.Printf("[TEST_ERROR] Create authentication mocked server (marshal result): %v", err.Error())
+					panic(m)
+				}
+
+				w.WriteHeader(http.StatusOK)
+				w.Write(result)
+			}
+		}))
+
+	// replace the redirect to authentication microservice
+	previousAuthUrl := os.Getenv("AUTH_API_URL")
+	os.Setenv("AUTH_API_URL", mockedAuthServer.URL)
 
 	request := &http.Request{
 		Method: http.MethodGet,
+		Header: map[string][]string{
+			"Authorization": {"admin_token"},
+		},
 	}
 
 	// make http request
 	recorder = httptest.NewRecorder()
 	exportPiFF(recorder, request)
 
-	os.Exit(m.Run())
+	code := m.Run()
+
+	// delete image because tests are finished
+	if os.Remove(imagePath) != nil {
+		log.Printf("[TEST_ERROR] Delete the original image: %v", err.Error())
+		panic(m)
+	}
+
+	// replace the real authentication url
+	os.Setenv("AUTH_API_URL", previousAuthUrl)
+	os.Exit(code)
+}
+
+func TestExportPiFFBadAuth(t *testing.T) {
+	wrongAuthRequest := &http.Request{
+		Method: http.MethodGet,
+		Header: map[string][]string{
+			"Authorization": {"annotator_token"},
+		},
+	}
+
+	// make http request
+	wrongAuthRecorder := httptest.NewRecorder()
+	exportPiFF(wrongAuthRecorder, wrongAuthRequest)
+
+	// status test
+	if status := wrongAuthRecorder.Code; status != http.StatusUnauthorized {
+		t.Errorf("[TEST_ERROR] Handler returned wrong status code: got %v want %v",
+			status, http.StatusUnauthorized)
+	}
 }
 
 func TestExportPiFFStatus(t *testing.T) {
@@ -178,11 +254,13 @@ func TestExportPiFFFormat(t *testing.T) {
 	body := recorder.Body
 	if body == nil {
 		t.Errorf("[TEST_ERROR] Handler returned nil body")
+		return
 	}
 
 	files, err := getZipFiles(body)
 	if err != nil {
 		t.Errorf("[TEST_ERROR] Handler returned a body which isn't a correct zip: %v", err.Error())
+		return
 	}
 
 	// test file names
@@ -202,6 +280,7 @@ func TestExportPiFFFormat(t *testing.T) {
 		if names[i] != files[i].Name {
 			t.Errorf("[TEST_ERROR] Handler returned wrong file name: got %v want %v",
 				files[i].Name, names[i])
+			return
 		}
 	}
 }
@@ -214,26 +293,31 @@ func TestExportPiFFFileContent(t *testing.T) {
 		file, err := files[i].Open()
 		if err != nil {
 			t.Errorf("[TEST_ERROR] Open file %v: .%v", files[i].Name, err.Error())
+			return
 		}
 
 		content, err := ioutil.ReadAll(file)
 		if err != nil {
 			t.Errorf("[TEST_ERROR] Read file %v: %v", files[i].Name, err.Error())
+			return
 		}
 
 		if file.Close() != nil {
 			t.Errorf("[TEST_ERROR] Close %v: %v", files[i].Name, err.Error())
+			return
 		}
 
 		var piFFContent PiFFStruct
 		err = json.Unmarshal(content, &piFFContent)
 		if err != nil {
 			t.Errorf("[TEST_ERROR] Handler returned an file %v which wasn't a piFF: %v", files[i].Name, err.Error())
+			return
 		}
 
 		if piFFContent.Data[0].Value != "TEST MICRO EXPORT" {
 			t.Errorf("[TEST_ERROR] Handler returned wrong value for file %v, got %v want %v",
 				files[i].Name, piFFContent.Data[0].Value, EmptyPiFF.Data[0].Value)
+			return
 		}
 	}
 
@@ -246,11 +330,13 @@ func TestExportPiFFImageContent(t *testing.T) {
 	originalImage, err := os.Open(imagePath)
 	if err != nil {
 		t.Errorf("[TEST_ERROR] Open the original image: %v", err.Error())
+		return
 	}
 
 	originalContent, err := png.Decode(originalImage)
 	if err != nil {
 		t.Errorf("[TEST_ERROR] Decode the original image: %v", err.Error())
+		return
 	}
 
 	// test image content
@@ -258,24 +344,24 @@ func TestExportPiFFImageContent(t *testing.T) {
 		image, err := files[i].Open()
 		if err != nil {
 			t.Errorf("[TEST_ERROR] Open image %v: %v", files[i].Name, err.Error())
+			return
 		}
 
 		imageContent, err := png.Decode(image)
 		if err != nil {
 			t.Errorf("[TEST_ERROR] Read image %v: %v", files[i].Name, err.Error())
+			return
 		}
 
 		if !reflect.DeepEqual(imageContent, originalContent) {
 			t.Errorf("[TEST_ERROR] Handler returned wrong image %v: %v", files[i].Name, err.Error())
+			return
 		}
 	}
 
-	// close and delete image because tests are finished
+	// close image
 	if originalImage.Close() != nil {
 		t.Errorf("[TEST_ERROR] Close the original image during test: %v", err.Error())
-	}
-
-	if os.Remove(imagePath) != nil {
-		t.Errorf("[TEST_ERROR] Delete the original image: %v", err.Error())
+		return
 	}
 }

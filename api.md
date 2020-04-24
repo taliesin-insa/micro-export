@@ -4,7 +4,7 @@ The possible descriptive file format are:
 * piFF
 
 ## Home Link [/export]
-Simple method to test whether the Go API is runing correctly
+Simple method to test whether the Go API is running correctly
 
 ### [GET]
 + Response 200 (text/plain)  
@@ -17,14 +17,28 @@ Simple method to test whether the Go API is runing correctly
 This action returns a zip archive containing all images with their piFF file. 
 
 ### [POST]
-This action has 1 negative response defined:  
-It will return a status 500 if an error occurs in the Go service. This can happen in the database retrieving, the images copying or in the files writing.  
+This action has 3 negative responses defined:
+The authentication service can return a 400 http error.
+It will return status 401 if the permission to export is insufficient.    
+It will return a status 500 if an error occurs in the Go service. This can happen in the authentication checking, the database retrieving, the images copying or in the files writing.  
 
 + Response 200 (application/zip)  
 	+ Body  
 		~~~
 		BLOB (zip archive containing all images with their piFF file)
 		~~~
+
++ Response 400 (text/plain)  
+	+ Body  
+		~~~
+        [MICRO-EXPORT] Couldn't verify identity
+        ~~~
+  
+  + Response 401 (text/plain)  
+  	+ Body  
+  		~~~
+          [MICRO-EXPORT] Insufficient permissions to export
+          ~~~
 
 + Response 500 (text/plain)  
 	+ Body  
