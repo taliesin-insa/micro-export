@@ -18,8 +18,8 @@ This action returns a zip archive containing all images with their piFF file.
 
 ### [POST]
 This action has 3 negative responses defined:
-The authentication service can return a 400 http error.
-It will return status 401 if the permission to export is insufficient.    
+The database service can return a 400 http error.
+It will return status 401 if the permission to export is insufficient (from the database).    
 It will return a status 500 if an error occurs in the Go service. This can happen in the authentication checking, the database retrieving, the images copying or in the files writing.  
 
 + Response 200 (application/zip)  
@@ -31,13 +31,13 @@ It will return a status 500 if an error occurs in the Go service. This can happe
 + Response 400 (text/plain)  
 	+ Body  
 		~~~
-        [MICRO-EXPORT] Couldn't verify identity
+        {user-friendly error message}
         ~~~
   
   + Response 401 (text/plain)  
   	+ Body  
   		~~~
-          [MICRO-EXPORT] Insufficient permissions to export
+          {user-friendly error message}
           ~~~
 
 + Response 500 (text/plain)  

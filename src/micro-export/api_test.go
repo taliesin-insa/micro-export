@@ -4,7 +4,6 @@ import (
 	"archive/zip"
 	"bytes"
 	"encoding/json"
-	lib_auth "github.com/taliesin-insa/lib-auth"
 	"image"
 	"image/color"
 	"image/png"
@@ -16,11 +15,6 @@ import (
 	"reflect"
 	"testing"
 )
-
-// for mockedAuthServer
-type VerifyRequest struct {
-	Token string
-}
 
 var EmptyPiFF = PiFFStruct{
 	Meta: Meta{
@@ -147,49 +141,8 @@ func TestMain(m *testing.M) { // executed before all tests
 	// replace the redirect to database microservice
 	DatabaseAPI = mockedDatabaseServer.URL
 
-	// fake server to replace the authentication call (in lib_auth)
-	mockedAuthServer := httptest.NewServer(
-		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if r.URL.Path == "/auth/verifyToken" {
-				reqBody, err := ioutil.ReadAll(r.Body)
-				if err != nil {
-					log.Printf("[TEST_ERROR] Create authentication mocked server (read body): %v", err.Error())
-					panic(m)
-				}
-
-				var reqData VerifyRequest
-				err = json.Unmarshal(reqBody, &reqData)
-				if err != nil {
-					log.Printf("[TEST_ERROR] Create authentication mocked server (unmarsal body): %v", err.Error())
-					panic(m)
-				}
-
-				var result []byte
-				if reqData.Token == "admin_token" {
-					result, err = json.Marshal(lib_auth.UserData{Username: "morpheus", Role: lib_auth.RoleAdmin})
-				} else {
-					result, err = json.Marshal(lib_auth.UserData{Username: "morpheus", Role: lib_auth.RoleAnnotator})
-				}
-
-				if err != nil {
-					log.Printf("[TEST_ERROR] Create authentication mocked server (marshal result): %v", err.Error())
-					panic(m)
-				}
-
-				w.WriteHeader(http.StatusOK)
-				w.Write(result)
-			}
-		}))
-
-	// replace the redirect to authentication microservice
-	previousAuthUrl := os.Getenv("AUTH_API_URL")
-	os.Setenv("AUTH_API_URL", mockedAuthServer.URL)
-
 	request := &http.Request{
 		Method: http.MethodGet,
-		Header: map[string][]string{
-			"Authorization": {"admin_token"},
-		},
 	}
 
 	// make http request
@@ -204,28 +157,7 @@ func TestMain(m *testing.M) { // executed before all tests
 		panic(m)
 	}
 
-	// replace the real authentication url
-	os.Setenv("AUTH_API_URL", previousAuthUrl)
 	os.Exit(code)
-}
-
-func TestExportPiFFBadAuth(t *testing.T) {
-	wrongAuthRequest := &http.Request{
-		Method: http.MethodGet,
-		Header: map[string][]string{
-			"Authorization": {"annotator_token"},
-		},
-	}
-
-	// make http request
-	wrongAuthRecorder := httptest.NewRecorder()
-	exportPiFF(wrongAuthRecorder, wrongAuthRequest)
-
-	// status test
-	if status := wrongAuthRecorder.Code; status != http.StatusUnauthorized {
-		t.Errorf("[TEST_ERROR] Handler returned wrong status code: got %v want %v",
-			status, http.StatusUnauthorized)
-	}
 }
 
 func TestExportPiFFStatus(t *testing.T) {
