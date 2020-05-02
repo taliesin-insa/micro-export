@@ -30,7 +30,7 @@ ADD src /src
 WORKDIR /src/micro-export
 
 # Download dependancies (if you try to build your image without following lines you will see missing packages)
-RUN go get -u github.com/gorilla/mux github.com/taliesin-insa/lib-auth
+RUN go get -u github.com/gorilla/mux
 
 # Build all project statically (prevent some exec user process caused "no such file or directory" error)
 ENV CGO_ENABLED=0
