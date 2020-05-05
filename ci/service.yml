@@ -3,6 +3,8 @@ kind: Service
 metadata:
   name: export-api
   namespace: gitlab-managed-apps
+  labels:
+    app: export
 spec:
   selector:
     app: export
@@ -17,6 +19,8 @@ kind: Service
 metadata:
   name: export-api-dev
   namespace: gitlab-managed-apps
+  labels:
+    app: export-dev
 spec:
   selector:
     app: export-dev

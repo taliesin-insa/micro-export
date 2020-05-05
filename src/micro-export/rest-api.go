@@ -277,6 +277,6 @@ func main() {
 	router.Path("/metrics").Handler(promhttp.Handler())
 
 	router.HandleFunc("/export/piff", exportPiFF).Methods("GET")
-	router.HandleFunc("/export", homeLink).Methods("GET")
+	router.HandleFunc("/export/", homeLink).Methods("GET")
 	log.Fatal(http.ListenAndServe(":22022", router))
 }
