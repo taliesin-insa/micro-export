@@ -10,6 +10,6 @@ spec:
     any: true
   selector:
     matchLabels:
-      app: import-dev
+      app: export-dev
   endpoints:
   - port: api
