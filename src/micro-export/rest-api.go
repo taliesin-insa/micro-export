@@ -6,6 +6,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"image"
 	"image/jpeg"
 	"image/png"
@@ -17,6 +20,13 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+)
+
+var (
+	httpRequestsTotal = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "http_requests_total",
+		Help: "Number of HTTP requests processed by the microservice",
+	})
 )
 
 var DatabaseAPI string
@@ -61,6 +71,8 @@ type Picture struct {
 }
 
 func exportPiFF(w http.ResponseWriter, r *http.Request) {
+	httpRequestsTotal.Inc() // incrementing the httpRequestsTotal counter
+
 	// get all PiFF from database
 	client := &http.Client{}
 	request, err := http.NewRequest(http.MethodGet, DatabaseAPI+"/db/retrieve/all", nil)
@@ -245,6 +257,8 @@ func exportPiFF(w http.ResponseWriter, r *http.Request) {
 
 // function to test whether docker file is correctly built
 func homeLink(w http.ResponseWriter, r *http.Request) {
+	httpRequestsTotal.Inc()
+
 	fmt.Fprintf(w, "[MICRO-EXPORT] Welcome home!")
 }
 
@@ -258,7 +272,11 @@ func main() {
 	}
 
 	router := mux.NewRouter().StrictSlash(true)
+
+	// metrics route for monitoring
+	router.Path("/metrics").Handler(promhttp.Handler())
+
 	router.HandleFunc("/export/piff", exportPiFF).Methods("GET")
-	router.HandleFunc("/export", homeLink).Methods("GET")
+	router.HandleFunc("/export/", homeLink).Methods("GET")
 	log.Fatal(http.ListenAndServe(":22022", router))
 }

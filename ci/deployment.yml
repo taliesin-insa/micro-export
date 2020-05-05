@@ -35,6 +35,9 @@ spec:
               value: "http://database-api.gitlab-managed-apps.svc.cluster.local:8080"
             - name: AUTH_API_URL
               value: "http://auth-api.gitlab-managed-apps.svc.cluster.local:8080"
+          resources:
+            requests:
+              cpu: "250m"
       volumes:
         - name: file-server
           persistentVolumeClaim:
@@ -76,6 +79,9 @@ spec:
               value: "dev"
             - name: DATABASE_API_URL
               value: "http://database-dev-api.gitlab-managed-apps.svc.cluster.local:8080"
+          resources:
+            requests:
+              cpu: "250m"
       volumes:
         - name: file-server-dev
           persistentVolumeClaim:
