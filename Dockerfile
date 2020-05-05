@@ -32,6 +32,10 @@ WORKDIR /src/micro-export
 # Download dependancies (if you try to build your image without following lines you will see missing packages)
 RUN go get -u github.com/gorilla/mux
 
+RUN go get -u github.com/prometheus/client_golang/prometheus
+RUN go get -u github.com/prometheus/client_golang/prometheus/promauto
+RUN go get -u github.com/prometheus/client_golang/prometheus/promhttp
+
 # Build all project statically (prevent some exec user process caused "no such file or directory" error)
 ENV CGO_ENABLED=0
 RUN go build -o main .
