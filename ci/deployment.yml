@@ -23,6 +23,7 @@ spec:
       containers:
         - name: export
           image: clyde.local:5005/taliesin/micro-export/master:prod
+          imagePullPolicy: Always          
           ports:
             - containerPort: 22022
           volumeMounts:
