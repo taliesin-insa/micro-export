@@ -30,7 +30,7 @@ ADD src /src
 WORKDIR /src/micro-export
 
 # Download dependancies (if you try to build your image without following lines you will see missing packages)
-RUN go get -u github.com/gorilla/mux
+RUN go get -u github.com/gorilla/mux github.com/stretchr/testify/assert
 
 RUN go get -u github.com/prometheus/client_golang/prometheus
 RUN go get -u github.com/prometheus/client_golang/prometheus/promauto
