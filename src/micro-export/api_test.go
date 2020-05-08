@@ -4,6 +4,7 @@ import (
 	"archive/zip"
 	"bytes"
 	"encoding/json"
+	"github.com/stretchr/testify/assert"
 	"image"
 	"image/color"
 	"image/png"
@@ -162,10 +163,7 @@ func TestMain(m *testing.M) { // executed before all tests
 
 func TestExportPiFFStatus(t *testing.T) {
 	// status test
-	if status := recorder.Code; status != http.StatusOK {
-		t.Errorf("[TEST_ERROR] Handler returned wrong status code: got %v want %v",
-			status, http.StatusOK)
-	}
+	assert.Equal(t, http.StatusOK, recorder.Code)
 }
 
 // returns the list of files in the zip
@@ -182,18 +180,14 @@ func getZipFiles(body *bytes.Buffer) ([]*zip.File, error) {
 }
 
 func TestExportPiFFFormat(t *testing.T) {
+	assert := assert.New(t)
+
 	// content tests
 	body := recorder.Body
-	if body == nil {
-		t.Errorf("[TEST_ERROR] Handler returned nil body")
-		return
-	}
+	assert.NotNil(body)
 
 	files, err := getZipFiles(body)
-	if err != nil {
-		t.Errorf("[TEST_ERROR] Handler returned a body which isn't a correct zip: %v", err.Error())
-		return
-	}
+	assert.Nil(err, "Handler returned a body which isn't a correct zip")
 
 	// test file names
 	names := []string{
@@ -209,15 +203,13 @@ func TestExportPiFFFormat(t *testing.T) {
 		"Unannotated/" + imageName + ".png"}
 
 	for i := 0; i < len(files); i++ {
-		if names[i] != files[i].Name {
-			t.Errorf("[TEST_ERROR] Handler returned wrong file name: got %v want %v",
-				files[i].Name, names[i])
-			return
-		}
+		assert.Equal(files[i].Name, names[i])
 	}
 }
 
 func TestExportPiFFFileContent(t *testing.T) {
+	assert := assert.New(t)
+
 	files, _ := getZipFiles(recorder.Body) // test over error already done in previous test
 
 	// test file content
@@ -241,21 +233,16 @@ func TestExportPiFFFileContent(t *testing.T) {
 
 		var piFFContent PiFFStruct
 		err = json.Unmarshal(content, &piFFContent)
-		if err != nil {
-			t.Errorf("[TEST_ERROR] Handler returned an file %v which wasn't a piFF: %v", files[i].Name, err.Error())
-			return
-		}
+		assert.Nil(err, "Handler returned a file "+files[i].Name+" which wasn't a piFF")
 
-		if piFFContent.Data[0].Value != "TEST MICRO EXPORT" {
-			t.Errorf("[TEST_ERROR] Handler returned wrong value for file %v, got %v want %v",
-				files[i].Name, piFFContent.Data[0].Value, EmptyPiFF.Data[0].Value)
-			return
-		}
+		assert.Equal(EmptyPiFF.Data[0].Value, piFFContent.Data[0].Value, "Handler returned wrong value for file "+files[i].Name)
 	}
 
 }
 
 func TestExportPiFFImageContent(t *testing.T) {
+	assert := assert.New(t)
+
 	files, _ := getZipFiles(recorder.Body) // test over error already done in previous test
 
 	// get info on the original image
@@ -285,10 +272,7 @@ func TestExportPiFFImageContent(t *testing.T) {
 			return
 		}
 
-		if !reflect.DeepEqual(imageContent, originalContent) {
-			t.Errorf("[TEST_ERROR] Handler returned wrong image %v: %v", files[i].Name, err.Error())
-			return
-		}
+		assert.True(reflect.DeepEqual(imageContent, originalContent), "Handler returned wrong image "+files[i].Name)
 	}
 
 	// close image
